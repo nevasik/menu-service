@@ -2,8 +2,7 @@ package ru.javaops.cloudjava.menuservice.service.impl;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import ru.javaops.cloudjava.menuservice.BaseTest;
+import ru.javaops.cloudjava.menuservice.BaseIntegrationTest;
 import ru.javaops.cloudjava.menuservice.dto.MenuItemDto;
 import ru.javaops.cloudjava.menuservice.dto.SortBy;
 import ru.javaops.cloudjava.menuservice.exception.MenuServiceException;
@@ -18,8 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.Assert.assertThrows;
 
-@SpringBootTest
-public class MenuServiceImplTest extends BaseTest {
+public class MenuServiceImplTest extends BaseIntegrationTest {
 
     @Autowired
     private MenuService menuService;
