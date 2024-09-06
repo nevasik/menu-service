@@ -1,6 +1,8 @@
 package ru.javaops.cloudjava.menuservice.testutils;
 
+import ru.javaops.cloudjava.menuservice.dto.CreateMenuRequest;
 import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
+import ru.javaops.cloudjava.menuservice.storage.model.Category;
 import ru.javaops.cloudjava.menuservice.storage.model.Ingredient;
 import ru.javaops.cloudjava.menuservice.storage.model.IngredientCollection;
 
@@ -31,4 +33,16 @@ public class TestData {
                 .build();
     }
 
+    public static CreateMenuRequest createMenuRequest() {
+        return CreateMenuRequest.builder()
+                .name(ITALIAN_SALAD_NAME)
+                .description(ITALIAN_SALAD_DESCRIPTION)
+                .price(ITALIAN_SALAD_PRICE)
+                .category(Category.SALADS)
+                .timeToCook(ITALIAN_SALAD_TIME_TO_COOK)
+                .weight(ITALIAN_SALAD_WEIGHT)
+                .imageUrl(ITALIAN_SALAD_IMAGE_URL)
+                .ingredientCollection(italianSaladIngredients())
+                .build();
+    }
 }
