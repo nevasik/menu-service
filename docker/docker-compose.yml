@@ -1,5 +1,16 @@
 version: "3.8"
 services:
+  menu-service:
+    image: "menu-service"
+    container_name: "menu-service"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "9091:9091"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/menu_service_db
+
   postgres:
     image: "postgres:16.1"
     container_name: "postgres"
