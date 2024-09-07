@@ -6,9 +6,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import ru.javaops.cloudjava.menuservice.BaseIntegrationTest;
+import ru.javaops.cloudjava.menuservice.dto.MenuInfo;
 import ru.javaops.cloudjava.menuservice.dto.MenuItemDto;
+import ru.javaops.cloudjava.menuservice.dto.OrderMenuRequest;
+import ru.javaops.cloudjava.menuservice.dto.OrderMenuResponse;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static ru.javaops.cloudjava.menuservice.testutils.TestConstants.BASE_URL;
@@ -148,5 +153,39 @@ public class MenuItemControllerTest extends BaseIntegrationTest {
                 .bodyValue(update)
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void getMenusForOrder_returnsCorrectMenuInfo() {
+        var request = OrderMenuRequest.builder()
+                .menuNames(Set.of("Cappuccino", "Green Salad", "Wine", "Tea", "Unknown"))
+                .build();
+        webTestClient.post()
+                .uri(BASE_URL + "/menu-info")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(OrderMenuResponse.class)
+                .value(response -> {
+                    var infos = response.getMenuInfos();
+                    infos.sort(Comparator.comparing(MenuInfo::getName));
+                    assertThat(infos).hasSize(request.getMenuNames().size());
+                    assertThat(infos.get(0).getName()).isEqualTo("Cappuccino");
+                    assertThat(infos.get(0).getPrice()).isNotNull();
+                    assertThat(infos.get(0).getIsAvailable()).isTrue();
+                    assertThat(infos.get(1).getName()).isEqualTo("Green Salad");
+                    assertThat(infos.get(1).getPrice()).isNotNull();
+                    assertThat(infos.get(1).getIsAvailable()).isTrue();
+                    assertThat(infos.get(2).getName()).isEqualTo("Tea");
+                    assertThat(infos.get(2).getPrice()).isNotNull();
+                    assertThat(infos.get(2).getIsAvailable()).isTrue();
+                    assertThat(infos.get(3).getName()).isEqualTo("Unknown");
+                    assertThat(infos.get(3).getPrice()).isNull();
+                    assertThat(infos.get(3).getIsAvailable()).isFalse();
+                    assertThat(infos.get(4).getName()).isEqualTo("Wine");
+                    assertThat(infos.get(4).getPrice()).isNotNull();
+                    assertThat(infos.get(4).getIsAvailable()).isTrue();
+                });
     }
 }

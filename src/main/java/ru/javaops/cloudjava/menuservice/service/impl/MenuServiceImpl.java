@@ -5,17 +5,19 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.javaops.cloudjava.menuservice.dto.CreateMenuRequest;
-import ru.javaops.cloudjava.menuservice.dto.MenuItemDto;
-import ru.javaops.cloudjava.menuservice.dto.SortBy;
-import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
+import ru.javaops.cloudjava.menuservice.dto.*;
 import ru.javaops.cloudjava.menuservice.exception.MenuServiceException;
 import ru.javaops.cloudjava.menuservice.mapper.MenuItemMapper;
 import ru.javaops.cloudjava.menuservice.service.MenuService;
 import ru.javaops.cloudjava.menuservice.storage.model.Category;
+import ru.javaops.cloudjava.menuservice.storage.model.MenuItemProjection;
 import ru.javaops.cloudjava.menuservice.storage.repositories.MenuItemRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -70,5 +72,21 @@ public class MenuServiceImpl implements MenuService {
     @Override
     public List<MenuItemDto> getMenusFor(Category category, SortBy sortBy) {
         return mapper.toDtoList(repository.getMenusFor(category, sortBy));
+    }
+
+    @Override
+    public OrderMenuResponse getMenusForOrder(OrderMenuRequest request) {
+        Map<String, MenuItemProjection> nameToProjection = repository.getMenuInfoForNames(request.getMenuNames()).stream()
+                .collect(Collectors.toMap(MenuItemProjection::getName, Function.identity()));
+        List<MenuInfo> menuInfos = new ArrayList<>();
+        for(String name: request.getMenuNames()) {
+            if (nameToProjection.containsKey(name)) {
+                var projection = nameToProjection.get(name);
+                menuInfos.add(new MenuInfo(projection.getName(), projection.getPrice(), true));
+            } else {
+                menuInfos.add(new MenuInfo(name, null, false));
+            }
+        }
+        return OrderMenuResponse.builder().menuInfos(menuInfos).build();
     }
 }
