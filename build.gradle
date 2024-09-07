@@ -56,6 +56,11 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
+bootBuildImage {
+	imageName = "${project.name}"
+	environment = ["BP_JVM_VERSION": "17.*"]
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
