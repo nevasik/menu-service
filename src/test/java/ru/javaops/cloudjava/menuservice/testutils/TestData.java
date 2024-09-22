@@ -41,7 +41,7 @@ public class TestData {
 
     public static UpdateMenuRequest updateMenuNotUniqueNameRequest() {
         return UpdateMenuRequest.builder()
-                .name("Hot Dog")
+                .name("Wine")
                 .price(BigDecimal.valueOf(145.42))
                 .timeToCook(4000L)
                 .description("New Hot Dog Description")

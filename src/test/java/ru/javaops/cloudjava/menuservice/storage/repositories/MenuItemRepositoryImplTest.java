@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.Assert.assertThrows;
 
 @DataJpaTest
 @Import(MenuAttrUpdaters.class)
@@ -53,9 +54,7 @@ class MenuItemRepositoryImplTest {
         var dto = TestData.updateMenuFullRequest();
         var id = getIdByName("Cappuccino");
         int updateCount = menuItemRepository.updateMenu(id, dto);
-
         assertThat(updateCount).isEqualTo(1);
-
         MenuItem updated = menuItemRepository.findById(id).get();
         assertFieldsEquality(updated, dto, "name", "description", "price", "timeToCook", "imageUrl");
     }
@@ -65,9 +64,7 @@ class MenuItemRepositoryImplTest {
         var dto = TestData.updateMenuPartRequest();
         var id = getIdByName("Tea");
         int updateCount = menuItemRepository.updateMenu(id, dto);
-
         assertThat(updateCount).isEqualTo(1);
-
         MenuItem updated = menuItemRepository.findById(id).get();
         assertFieldsEquality(updated, dto, "name", "price", "description");
     }
@@ -75,15 +72,16 @@ class MenuItemRepositoryImplTest {
     @Test // for part/full check field name is unique
     void updateMenu_throws_whenUpdateRequestHasNotUniqueName() {
         var dto = TestData.updateMenuNotUniqueNameRequest();
-        assert checkIsUniqueByName(dto.getName()) != null;
+        var id = getIdByName("Cappuccino");
+        assertThrows(DataIntegrityViolationException.class,
+                () -> menuItemRepository.updateMenu(id, dto));
     }
 
     @Test // for part/full continue if not found by field name
     void updateMenu_updatesNothing_whenNoMenuPresentInDB() {
         var dto = TestData.updateMenuNoMenuContinue();
-        boolean isEmpty = getIsEmptyInStock(dto.getName());
-
-        assertThat(isEmpty).isEqualTo(true);
+        int countUpdate = menuItemRepository.updateMenu(111234L, dto);
+        assertThat(countUpdate).isEqualTo(0);
     }
 
     @Test
@@ -131,27 +129,6 @@ class MenuItemRepositoryImplTest {
         return em.createQuery("select m.id from MenuItem m where m.name= ?1", Long.class)
                 .setParameter(1, name)
                 .getSingleResult();
-    }
-
-    private DataIntegrityViolationException checkIsUniqueByName(String name) {
-        try {
-            em.createQuery("select m.id from MenuItem m where m.name= ?1", Long.class)
-                    .setParameter(1, name)
-                    .getSingleResult();
-
-            return new DataIntegrityViolationException("field name is not unique");
-        } catch (NoResultException e) {
-            return null;
-        }
-    }
-
-
-    private boolean getIsEmptyInStock(String name) {
-        List<Long> resultList = em.createQuery("select m.id from MenuItem m where m.name= ?1", Long.class)
-                .setParameter(1, name)
-                .getResultList();
-
-        return resultList.isEmpty();
     }
 
     private <T, R> void assertFieldsEquality(T item, R dto, String... fields) {
