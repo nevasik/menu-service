@@ -3,99 +3,77 @@ package ru.javaops.cloudjava.menuservice.storage.model;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.format.annotation.DateTimeFormat;
+import ru.javaops.cloudjava.menuservice.util.DateUtil;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Objects;
 
-@Entity
-@Table(name = "menu_items", uniqueConstraints = {@UniqueConstraint(columnNames = {"name"})})
 @Setter
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@ToString
+@Entity
+@Table(name = "menu_items")
 public class MenuItem {
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(name = "name")
-    @NotNull
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "description")
-    @NotNull
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "price")
-    private double price;
+    @Column(name = "price", nullable = false)
+    private BigDecimal price;
 
-    @Column(name = "category")
+    @Column(name = "category", nullable = false)
+    @Enumerated(EnumType.STRING)
     private Category category;
 
-    @Column(name = "time_to_cook")
-    @NotNull
+    @Column(name = "time_to_cook", nullable = false)
     private long timeToCook;
 
-    @Column(name = "weight")
-    @NotNull
+    @Column(name = "weight", nullable = false)
     private double weight;
 
-    @Column(name = "image_url")
-    @NotNull
+    @Column(name = "image_url", nullable = false)
     private String imageURL;
 
-    @Column(name = "ingredient_collection")
-    @Type(JsonBinaryType.class)
-    @NotNull
-    private IngredientCollection[] ingredientCollection;
-
-    @Column(name = "create_at")
+    @Column(name = "create_at", nullable = false)
     @CreationTimestamp
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @NotNull
+    @DateTimeFormat(pattern = DateUtil.DATE_FORMAT)
     private Date createAt;
 
-    @Column(name = "update_at", columnDefinition = "jsonb")
+    @Column(name = "update_at", nullable = false)
     @UpdateTimestamp
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @NotNull
+    @DateTimeFormat(pattern = DateUtil.DATE_FORMAT)
     private Date updateAt;
 
-    public MenuItem(){
-    }
-
-    public MenuItem(long id, String name, String description, double price, Category category, long timeToCook, double weight, String imageURL,
-                    IngredientCollection[] ingredientCollection, Date createAt, Date updateAt) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.category = category;
-        this.timeToCook = timeToCook;
-        this.weight = weight;
-        this.imageURL = imageURL;
-        this.ingredientCollection = ingredientCollection;
-        this.createAt = createAt;
-        this.updateAt = updateAt;
-    }
+    @Type(JsonBinaryType.class)
+    @Column(name = "ingredient_collection", columnDefinition = "jsonb")
+    private IngredientCollection ingredientCollection;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MenuItem menuItem = (MenuItem) o;
-        return Double.compare(price, menuItem.price) == 0 && Objects.equals(name, menuItem.name)
-                && Objects.equals(category, menuItem.category) && Objects.equals(createAt, menuItem.createAt);
+        return id == menuItem.id;
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return 0;
     }
 }
