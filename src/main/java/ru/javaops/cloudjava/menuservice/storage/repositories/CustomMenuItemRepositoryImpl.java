@@ -33,7 +33,9 @@ public class CustomMenuItemRepositoryImpl implements CustomMenuItemRepository {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaUpdate<MenuItem> criteriaUpdate = cb.createCriteriaUpdate(MenuItem.class);
         Root<MenuItem> root = criteriaUpdate.from(MenuItem.class);
-        updaters.forEach(updater -> updater.updateAttr(criteriaUpdate, dto));
+        updaters.forEach(updater -> {
+            updater.updateAttr(criteriaUpdate, dto);
+        });
         criteriaUpdate.where(cb.equal(root.get(MenuItem_.id), id));
         return em.createQuery(criteriaUpdate).executeUpdate();
     }

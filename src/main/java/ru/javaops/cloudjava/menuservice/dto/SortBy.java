@@ -37,13 +37,13 @@ public enum SortBy {
     DATE_ASC {
         @Override
         public Order getOrder(CriteriaBuilder cb, Root<MenuItem> root) {
-            return cb.asc(root.get(MenuItem_.createAt));
+            return cb.asc(root.get(MenuItem_.createdAt));
         }
     },
     DATE_DESC {
         @Override
         public Order getOrder(CriteriaBuilder cb, Root<MenuItem> root) {
-            return cb.desc(root.get(MenuItem_.createAt));
+            return cb.desc(root.get(MenuItem_.createdAt));
         }
     };
 

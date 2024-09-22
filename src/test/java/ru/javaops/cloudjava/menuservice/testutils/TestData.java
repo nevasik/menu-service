@@ -31,4 +31,31 @@ public class TestData {
                 .build();
     }
 
+    public static UpdateMenuRequest updateMenuPartRequest() {
+        return UpdateMenuRequest.builder()
+                .name("New Latte")
+                .price(BigDecimal.valueOf(95.13))
+                .description("New Latte Description")
+                .build();
+    }
+
+    public static UpdateMenuRequest updateMenuNotUniqueNameRequest() {
+        return UpdateMenuRequest.builder()
+                .name("Hot Dog")
+                .price(BigDecimal.valueOf(145.42))
+                .timeToCook(4000L)
+                .description("New Hot Dog Description")
+                .imageUrl("http://images.com/hot_dog.png")
+                .build();
+    }
+
+    public static UpdateMenuRequest updateMenuNoMenuContinue() {
+        return UpdateMenuRequest.builder()
+                .name("No Product")
+                .price(BigDecimal.valueOf(145.42))
+                .timeToCook(424L)
+                .description("No Product Description")
+                .imageUrl("http://images.com/no_product.png")
+                .build();
+    }
 }

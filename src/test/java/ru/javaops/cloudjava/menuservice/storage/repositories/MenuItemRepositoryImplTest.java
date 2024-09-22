@@ -1,11 +1,13 @@
 package ru.javaops.cloudjava.menuservice.storage.repositories;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
@@ -22,6 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import static java.util.Collections.reverse;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @DataJpaTest
@@ -39,35 +43,49 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
                 executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD
         )
 })
+
 class MenuItemRepositoryImplTest {
     @Autowired
     private MenuItemRepository menuItemRepository;
     @Autowired
     private EntityManager em;
 
-    @Test
+    @Test // for full field filling model request
     void updateMenu_updatesMenu_whenAllUpdateFieldsAreSet() {
         var dto = TestData.updateMenuFullRequest();
         var id = getIdByName("Cappuccino");
         int updateCount = menuItemRepository.updateMenu(id, dto);
+
         assertThat(updateCount).isEqualTo(1);
+
         MenuItem updated = menuItemRepository.findById(id).get();
         assertFieldsEquality(updated, dto, "name", "description", "price", "timeToCook", "imageUrl");
     }
 
-    @Test
+    @Test // for part field filling model request
     void updateMenu_updatesMenu_whenSomeUpdateFieldsAreSet() {
-        // TODO
+        var dto = TestData.updateMenuPartRequest();
+        var id = getIdByName("Tea");
+        int updateCount = menuItemRepository.updateMenu(id, dto);
+
+        assertThat(updateCount).isEqualTo(1);
+
+        MenuItem updated = menuItemRepository.findById(id).get();
+        assertFieldsEquality(updated, dto, "name", "price", "description");
     }
 
-    @Test
+    @Test // for part/full check field name is unique
     void updateMenu_throws_whenUpdateRequestHasNotUniqueName() {
-        // TODO
+        var dto = TestData.updateMenuNotUniqueNameRequest();
+        assert checkIsUniqueByName(dto.getName()) != null;
     }
 
-    @Test
+    @Test // for part/full continue if not found by field name
     void updateMenu_updatesNothing_whenNoMenuPresentInDB() {
-        // TODO
+        var dto = TestData.updateMenuNoMenuContinue();
+        boolean isEmpty = getIsEmptyInStock(dto.getName());
+
+        assertThat(isEmpty).isEqualTo(true);
     }
 
     @Test
@@ -79,33 +97,63 @@ class MenuItemRepositoryImplTest {
 
     @Test
     void getMenusFor_returnsCorrectListForDRINKS_sortedByPriceDesc() {
-        // TODO
+        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.PRICE_DESC);
+        assertThat(drinks).hasSize(3);
+        assertElementsInOrder(drinks, MenuItem::getPrice, List.of("Tea", "Wine", "Cappuccino"));
     }
-
     @Test
     void getMenusFor_returnsCorrectListForDRINKS_sortedByNameAsc() {
-        // TODO
+        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.AZ);
+        assertThat(drinks).hasSize(3);
+        assertElementsInOrder(drinks, MenuItem::getName, List.of("Cappuccino", "Tea", "Wine"));
     }
 
     @Test
     void getMenusFor_returnsCorrectListForDRINKS_sortedByNameDesc() {
-        // TODO
+        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.ZA);
+        assertThat(drinks).hasSize(3);
+        assertElementsInOrder(drinks, MenuItem::getName, List.of("Wine", "Tea", "Cappuccino"));
     }
 
     @Test
     void getMenusFor_returnsCorrectListForDRINKS_sortedByDateAsc() {
-        // TODO
+        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.DATE_ASC);
+        assertThat(drinks).hasSize(3);
+        assertElementsInOrder(drinks, MenuItem::getName, List.of("Cappuccino", "Wine", "Tea"));
     }
 
     @Test
     void getMenusFor_returnsCorrectListForDRINKS_sortedByDateDesc() {
-        // TODO
+        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.DATE_ASC);
+        assertThat(drinks).hasSize(3);
+        assertElementsInOrder(drinks, MenuItem::getName, List.of("Tea", "Wine", "Cappuccino"));
     }
 
     private Long getIdByName(String name) {
         return em.createQuery("select m.id from MenuItem m where m.name= ?1", Long.class)
                 .setParameter(1, name)
                 .getSingleResult();
+    }
+
+    private DataIntegrityViolationException checkIsUniqueByName(String name) {
+        try {
+            em.createQuery("select m.id from MenuItem m where m.name= ?1", Long.class)
+                    .setParameter(1, name)
+                    .getSingleResult();
+
+            return new DataIntegrityViolationException("field name is not unique");
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+
+    private boolean getIsEmptyInStock(String name) {
+        List<Long> resultList = em.createQuery("select m.id from MenuItem m where m.name= ?1", Long.class)
+                .setParameter(1, name)
+                .getResultList();
+
+        return resultList.isEmpty();
     }
 
     private <T, R> void assertFieldsEquality(T item, R dto, String... fields) {

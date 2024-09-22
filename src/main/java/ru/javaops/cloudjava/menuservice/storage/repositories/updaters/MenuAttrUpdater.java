@@ -8,6 +8,5 @@ import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
 @AllArgsConstructor
 public class MenuAttrUpdater<V> {
     public void updateAttr(CriteriaUpdate<MenuItem> criteria, UpdateMenuRequest dto) {
-        //  TODO  criteria.set(attr, dtoValue);
     }
 }
