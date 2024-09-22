@@ -1,27 +1,22 @@
 package ru.javaops.cloudjava.menuservice.storage.repositories.updaters;
 
 import jakarta.persistence.criteria.CriteriaUpdate;
+import jakarta.persistence.metamodel.SingularAttribute;
 import lombok.AllArgsConstructor;
 import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
 import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
 
-import java.util.Arrays;
+import java.util.function.Function;
 
 @AllArgsConstructor
 public class MenuAttrUpdater<V> {
+    SingularAttribute<MenuItem, V> attr; // attr - для поля(*name) и типа данных(*string) для MenuItem
+    Function<UpdateMenuRequest, V> dtoValueExtractor; // dtoValueExtractor -
+
     public void updateAttr(CriteriaUpdate<MenuItem> criteria, UpdateMenuRequest dto) {
-        Arrays.stream(dto.getClass()
-                .getDeclaredFields())
-                .forEach(el -> {
-                    el.setAccessible(true);
-                    try {
-                        if (el.get(dto.getClass()) != null) {
-                            criteria.set(el.getName(), el.get(dto));
-                        }
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e.getMessage());
-                    }
-                }
-        );
+        V dtoValue = dtoValueExtractor.apply(dto);
+        if (dtoValue != null) {
+            criteria.set(attr, dtoValue);
+        }
     }
 }

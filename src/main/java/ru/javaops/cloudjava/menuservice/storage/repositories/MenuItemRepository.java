@@ -5,5 +5,4 @@ import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
 
 
 public interface MenuItemRepository extends JpaRepository<MenuItem, Long>, CustomMenuItemRepository {
-
 }

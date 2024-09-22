@@ -24,8 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-import static java.util.Collections.reverse;
-import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @DataJpaTest
@@ -99,7 +97,7 @@ class MenuItemRepositoryImplTest {
     void getMenusFor_returnsCorrectListForDRINKS_sortedByPriceDesc() {
         var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.PRICE_DESC);
         assertThat(drinks).hasSize(3);
-        assertElementsInOrder(drinks, MenuItem::getPrice, List.of("Tea", "Wine", "Cappuccino"));
+        assertElementsInOrder(drinks, MenuItem::getName, List.of("Tea", "Wine", "Cappuccino"));
     }
     @Test
     void getMenusFor_returnsCorrectListForDRINKS_sortedByNameAsc() {
@@ -124,7 +122,7 @@ class MenuItemRepositoryImplTest {
 
     @Test
     void getMenusFor_returnsCorrectListForDRINKS_sortedByDateDesc() {
-        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.DATE_ASC);
+        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.DATE_DESC);
         assertThat(drinks).hasSize(3);
         assertElementsInOrder(drinks, MenuItem::getName, List.of("Tea", "Wine", "Cappuccino"));
     }
