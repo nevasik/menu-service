@@ -2,7 +2,6 @@ package ru.javaops.cloudjava.menuservice.storage.repositories;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Root;
 import org.springframework.stereotype.Repository;
