@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 public class TestConstants {
 
     public static final String BASE_URL = "/v1/menu-items";
-
     public static final String ITALIAN_SALAD_NAME = "Italian Salad";
     public static final String ITALIAN_SALAD_DESCRIPTION = "Italian Salad description";
     public static final BigDecimal ITALIAN_SALAD_PRICE = BigDecimal.TEN;
@@ -16,5 +15,4 @@ public class TestConstants {
     public static final int ITALIAN_SALAD_GREENS_INGREDIENT_CALORIES = 100;
     public static final String ITALIAN_SALAD_TOMATOES_INGREDIENT = "tomatoes";
     public static final int ITALIAN_SALAD_TOMATOES_INGREDIENT_CALORIES = 200;
-
 }
