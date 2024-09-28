@@ -156,6 +156,7 @@ public class MenuItemController {
     @PostMapping("/menu-info")
     public OrderMenuResponse getMenusForOrder(@RequestBody @Valid OrderMenuRequest request) {
         log.info("Received request to GET info for menu with names: {}", request.getMenuNames());
-        return menuService.getMenusForOrder(request);
+        //return menuService.getMenusForOrder(request);
+        return null;
     }
 }

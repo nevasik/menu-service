@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import ru.javaops.cloudjava.menuservice.BaseTest;
 import ru.javaops.cloudjava.menuservice.dto.CreateMenuRequest;
@@ -29,11 +30,12 @@ import static ru.javaops.cloudjava.menuservice.testutils.TestData.italianSaladIn
 
 @SpringBootTest
 public class MenuServiceImplTest extends BaseTest {
-
     @Autowired
     private MenuService menuService;
+
     @Autowired
     private MenuItemRepository repository;
+
     @Autowired
     private MenuItemMapper menuItemMapper;
 
@@ -62,7 +64,7 @@ public class MenuServiceImplTest extends BaseTest {
 
     @Test // get menus by id
     void getMenusById_returnsMenuItem() {
-        Long id = 1L;
+        Long id = 2L;
         MenuItemDto result = menuService.getMenu(id);
 
         assertThat(result).isNotNull();
@@ -70,7 +72,7 @@ public class MenuServiceImplTest extends BaseTest {
 
     @Test // get menus by undefined id
     void getMenuItemBy_returnsError() {
-        Long id = -1L;
+        Long id = -5L;
         assertThrows(MenuServiceException.class,
                 () -> menuService.getMenu(id));
     }
@@ -116,9 +118,9 @@ public class MenuServiceImplTest extends BaseTest {
                 .timeToCook(10L)
                 .build();
 
-        assertDoesNotThrow(() -> menuService.updateMenuItem(1L, req));
+        assertDoesNotThrow(() -> menuService.updateMenuItem(2L, req));
 
-        MenuItemDto menuItemDto = menuService.getMenu(1L);
+        MenuItemDto menuItemDto = menuService.getMenu(2L);
         Objects.requireNonNull(menuItemDto);
     }
 
@@ -139,7 +141,7 @@ public class MenuServiceImplTest extends BaseTest {
     @Test // update menuItem by not unique name
     void updateMenuItemNotUniqueName_returnsError() {
         var req = UpdateMenuRequest.builder()
-                .name("Tea")
+                .name("Cappuccino")
                 .price(BigDecimal.valueOf(100))
                 .description("Test nob in DB")
                 .imageUrl("http://test/")
@@ -147,7 +149,7 @@ public class MenuServiceImplTest extends BaseTest {
                 .build();
 
         MenuServiceException exception = assertThrows(MenuServiceException.class,
-                () -> menuService.updateMenuItem(1L, req));
+                () -> menuService.updateMenuItem(3L, req));
 
         boolean isDuplicateError = Objects.equals(
                 exception.getStatus(),
@@ -156,6 +158,4 @@ public class MenuServiceImplTest extends BaseTest {
 
         Assertions.assertTrue(isDuplicateError);
     }
-
-
 }
