@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import ru.javaops.cloudjava.menuservice.BaseTest;
 import ru.javaops.cloudjava.menuservice.dto.CreateMenuRequest;
@@ -12,7 +11,6 @@ import ru.javaops.cloudjava.menuservice.dto.MenuItemDto;
 import ru.javaops.cloudjava.menuservice.dto.SortBy;
 import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
 import ru.javaops.cloudjava.menuservice.exception.MenuServiceException;
-import ru.javaops.cloudjava.menuservice.mapper.MenuItemMapper;
 import ru.javaops.cloudjava.menuservice.service.MenuService;
 import ru.javaops.cloudjava.menuservice.storage.model.Category;
 import ru.javaops.cloudjava.menuservice.storage.repositories.MenuItemRepository;
@@ -35,9 +33,6 @@ public class MenuServiceImplTest extends BaseTest {
 
     @Autowired
     private MenuItemRepository repository;
-
-    @Autowired
-    private MenuItemMapper menuItemMapper;
 
     @Test
     void getMenusFor_DRINKS_returnsCorrectList() {
@@ -63,27 +58,30 @@ public class MenuServiceImplTest extends BaseTest {
     }
 
     @Test // get menus by id
-    void getMenusById_returnsMenuItem() {
-        Long id = 2L;
-        MenuItemDto result = menuService.getMenu(id);
+    void getMenus_returnsMenuItem_whenMenuIDInDB() {
+        var id = getIdByName("Cappuccino");
+        MenuItemDto menu = menuService.getMenu(id);
 
-        assertThat(result).isNotNull();
+        assertThat(menu).isNotNull();
+        assertThat(menu.getName()).isEqualTo("Cappuccino");
+        assertThat(menu.getId()).isNotNull();
+        assertThat(menu.getCreatedAt()).isNotNull();
+        assertThat(menu.getUpdatedAt()).isNotNull();
     }
 
     @Test // get menus by undefined id
     void getMenuItemBy_returnsError() {
-        Long id = -5L;
         assertThrows(MenuServiceException.class,
-                () -> menuService.getMenu(id));
+                () -> menuService.getMenu(1000L));
     }
 
     @Test // delete menu item by id
     void deleteMenuItemByID_returnsNonError() {
-        Long id = 1L;
+        var id = getIdByName("Cappuccino");
         assertDoesNotThrow(() ->  menuService.deleteMenuItem(id));
 
-        assertThrows(MenuServiceException.class,
-                () -> menuService.getMenu(id));
+        var deleteCount =  repository.findById((id));
+        assertThat(deleteCount).isEmpty();
     }
 
     @Test // create menuItem with duplicate name, expecting an error
@@ -110,7 +108,9 @@ public class MenuServiceImplTest extends BaseTest {
 
     @Test // update menuItem success
     void updateMenuItem_returnsSuccess() {
-        var req = UpdateMenuRequest.builder()
+        var id = getIdByName("Cappuccino");
+
+        var item = UpdateMenuRequest.builder()
                 .name("Test")
                 .price(BigDecimal.valueOf(100))
                 .description("Test nob in DB")
@@ -118,10 +118,8 @@ public class MenuServiceImplTest extends BaseTest {
                 .timeToCook(10L)
                 .build();
 
-        assertDoesNotThrow(() -> menuService.updateMenuItem(2L, req));
-
-        MenuItemDto menuItemDto = menuService.getMenu(2L);
-        Objects.requireNonNull(menuItemDto);
+        MenuItemDto updated = menuService.updateMenuItem(id, item);
+        assertFieldsEquality(item, updated, "name", "description", "price", "", "timeToCook", "imageUrl");
     }
 
     @Test // update menuItem by unknown id
@@ -140,6 +138,7 @@ public class MenuServiceImplTest extends BaseTest {
 
     @Test // update menuItem by not unique name
     void updateMenuItemNotUniqueName_returnsError() {
+        var id = getIdByName("Wine");
         var req = UpdateMenuRequest.builder()
                 .name("Cappuccino")
                 .price(BigDecimal.valueOf(100))
@@ -149,7 +148,7 @@ public class MenuServiceImplTest extends BaseTest {
                 .build();
 
         MenuServiceException exception = assertThrows(MenuServiceException.class,
-                () -> menuService.updateMenuItem(3L, req));
+                () -> menuService.updateMenuItem(id, req));
 
         boolean isDuplicateError = Objects.equals(
                 exception.getStatus(),
