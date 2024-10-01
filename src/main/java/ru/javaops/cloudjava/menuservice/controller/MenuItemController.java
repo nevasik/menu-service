@@ -1,162 +1,104 @@
 package ru.javaops.cloudjava.menuservice.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.javaops.cloudjava.menuservice.dto.*;
+import ru.javaops.cloudjava.menuservice.dto.CreateMenuRequest;
+import ru.javaops.cloudjava.menuservice.dto.MenuItemDto;
+import ru.javaops.cloudjava.menuservice.dto.SortBy;
+import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
+import ru.javaops.cloudjava.menuservice.exception.MenuServiceException;
+import ru.javaops.cloudjava.menuservice.mapper.MenuItemMapper;
 import ru.javaops.cloudjava.menuservice.service.MenuService;
 import ru.javaops.cloudjava.menuservice.storage.model.Category;
+import ru.javaops.cloudjava.menuservice.storage.model.Ingredient;
+import ru.javaops.cloudjava.menuservice.storage.model.IngredientCollection;
+import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
 
+import java.math.BigDecimal;
+import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.List;
 
-@Tag(name = "MenuItemController", description = "REST API для работы с меню.")
+import static org.springframework.http.ResponseEntity.ok;
+
+/*
+POST /v1/menu-items - создать блюдо, информация о блюде передается в теле запроса. Доступно для сотрудников, информация о сотруднике передается в токене доступа.
+
+DELETE /v1/menu-items/{id} - удалить блюдо. Доступно для сотрудников, информация о сотруднике передается в токене доступа
+
+PATCH /v1/menu-items/{id} - обновить блюдо, параметры обновления передаются в теле запроса. Доступно для сотрудников, информация о сотруднике передается в токене доступа
+
+GET /v1/menu-items/{id} - получить блюдо. Доступно всем пользователям
+
+GET /v1/menu-items?category={category}&sort={sort} - получить список блюд из выбранной категории, отсортированный или по алфавиту(AZ, ZA),
+или по цене (PRICE_ASC, PRICE_DESC), или по дате создания (DATE_ASC, DATE_DESC). Доступно всем пользователям
+ */
+
 @Slf4j
 @RestController
 @RequestMapping("/v1/menu-items")
 @RequiredArgsConstructor
+@CrossOrigin
 public class MenuItemController {
-
+    @Autowired
     private final MenuService menuService;
+    @Autowired
+    private final MenuItemMapper mapper;
 
-    @Operation(
-            summary = "${api.menu-create.summary}",
-            description = "${api.menu-create.description}"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "${api.response.createOk}"),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "${api.response.createConflict}",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "${api.response.createBadRequest}",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    )),
-    })
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public MenuItemDto createMenuItem(@RequestBody @Valid CreateMenuRequest dto) {
-        log.info("Received POST request to create MenuItem: {}", dto);
-        return menuService.createMenuItem(dto);
+    @PostMapping("/")
+    public ResponseEntity<?> createMenuItem(@Valid @RequestBody CreateMenuRequest req) {
+        try {
+            return new ResponseEntity<>(menuService.createMenuItem(req), HttpStatus.CREATED);
+        } catch (MenuServiceException e) {
+            log.error("Error create menuItem by req={} {}", req, e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
-    @Operation(
-            summary = "${api.menu-delete.summary}",
-            description = "${api.menu-delete.description}"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "${api.response.deleteNoContent}")
-    })
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteMenuItem(@PathVariable("id") @Positive(message = "id должен быть > 0") Long id) {
-        log.info("Received request to DELETE MenuItem with id={}", id);
-        menuService.deleteMenuItem(id);
+    public ResponseEntity<?> deleteMenuItemByID(@PathVariable("id") Long id) {
+        try {
+            menuService.deleteMenuItem(id);
+            return ResponseEntity.noContent().build();
+        } catch (MenuServiceException e) {
+            log.error("Error delete menuItem by id={} {}", id, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    @Operation(
-            summary = "${api.menu-update.summary}",
-            description = "${api.menu-update.description}"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "${api.response.updateOk}"),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "${api.response.notFound}",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "${api.response.updateBadRequest}",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    )
-            ),
-    })
     @PatchMapping("/{id}")
-    public MenuItemDto updateMenuItem(@PathVariable("id") @Positive(message = "id должен быть > 0.") Long id,
-                                      @RequestBody @Valid UpdateMenuRequest update) {
-        log.info("Received PATCH request to update MenuItem with id={}. Update params: {}", id, update);
-        return menuService.updateMenuItem(id, update);
+    public ResponseEntity<?> updateMenuItemByID(@PathVariable Long id, @Valid @RequestBody UpdateMenuRequest req) {
+        try {
+            return new ResponseEntity<>(menuService.updateMenuItem(id, req), HttpStatus.OK);
+        } catch (MenuServiceException e) {
+            log.error("Error update menuItem by id={} {}", id, e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
     }
 
-    @Operation(
-            summary = "${api.menu-get.summary}",
-            description = "${api.menu-get.description}"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "${api.response.getOk}"),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "${api.response.notFound}",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    )
-            )
-    })
     @GetMapping("/{id}")
-    public MenuItemDto getMenu(@PathVariable("id") @Positive(message = "id должен быть > 0.") Long id) {
-        log.info("Received request to GET MenuItem with id={}", id);
-        return menuService.getMenu(id);
+    public ResponseEntity<?> getMenuItemByID(@PathVariable Long id) {
+        try {
+            return new ResponseEntity<>(menuService.getMenu(id), HttpStatus.OK);
+        } catch (MenuServiceException e) {
+            log.error("Error get menuItem by id={} {}", id, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    @Operation(
-            summary = "${api.menu-list-get.summary}",
-            description = "${api.menu-list-get.description}"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "${api.response.getListOk}"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "${api.response.getListBadRequest}",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    )
-            )
-    })
-    @GetMapping
-    public List<MenuItemDto> getMenus(@RequestParam("category") @NotBlank(message = "Категория не должна быть пустой.") String category,
-                                      @RequestParam(value = "sort", defaultValue = "az") @NotBlank(message = "Параметр сортировки не должен быть пустым.") String sort) {
-        log.info("Received request to GET list of MenuItems for category={}, sorted by={}", category, sort);
-        return menuService.getMenusFor(Category.fromString(category), SortBy.fromString(sort));
-    }
-
-    @Operation(
-            summary = "${api.menu-info.summary}",
-            description = "${api.menu-info.description}"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "${api.response.getMenuInfoOk}"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "${api.response.getMenuInfoBadRequest}",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    )
-            )
-    })
-    @PostMapping("/menu-info")
-    public OrderMenuResponse getMenusForOrder(@RequestBody @Valid OrderMenuRequest request) {
-        log.info("Received request to GET info for menu with names: {}", request.getMenuNames());
-        //return menuService.getMenusForOrder(request);
-        return null;
+    @GetMapping("/?category={category}&sort={sort}")
+    public ResponseEntity<?> getMenusFor(@PathVariable Category category, @PathVariable SortBy sort) {
+        try {
+            return new ResponseEntity<>(menuService.getMenusFor(category, sort), HttpStatus.OK);
+        } catch (MenuServiceException e) {
+            log.error("Error get menus for by category={} and sort={}. {}", category, sort, e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 }
