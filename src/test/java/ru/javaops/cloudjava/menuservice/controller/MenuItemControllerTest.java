@@ -9,13 +9,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import ru.javaops.cloudjava.menuservice.BaseTest;
 import ru.javaops.cloudjava.menuservice.dto.MenuItemDto;
+import ru.javaops.cloudjava.menuservice.testutils.TestData;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static ru.javaops.cloudjava.menuservice.testutils.TestConstants.BASE_URL;
-import static ru.javaops.cloudjava.menuservice.testutils.TestData.createMenuRequest;
-import static ru.javaops.cloudjava.menuservice.testutils.TestData.updateMenuFullRequest;
+import static ru.javaops.cloudjava.menuservice.testutils.TestData.*;
 
 @AutoConfigureMockMvc
 @SpringBootTest
@@ -102,5 +103,67 @@ public class MenuItemControllerTest extends BaseTest {
                 .bodyValue(update)
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test // Успешное получение блюда по идентификатору
+    void getMenuItemByID_returnsMenuItem() {
+        var req = getMenuRequest();
+        var id = getIdByName("Cappuccino");
+
+        webTestClient.get()
+                .uri(BASE_URL + "/" + id)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(MenuItemDto.class)
+                .value(response -> {
+                    assertThat(response.getId()).isNotNull();
+                    assertThat(response.getName()).isNotNull();
+                    assertThat(response.getDescription()).isNotNull();
+                    assertThat(response.getPrice()).isNotNull();
+                    assertThat(response.getImageUrl()).isNotNull();
+                    assertThat(response.getCreatedAt()).isNotNull();
+                });
+    }
+
+    @Test // Ошибка при получении несуществующего блюда
+    void getMenuItemByID_returnsBAD_REQUEST_whenItemNotInDb() {
+        var id = -11L;
+
+        webTestClient.get()
+                .uri(BASE_URL + "/" + id)
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test // Получение пустого списка блюд из категории, в которой нет блюд
+    void getListMenuItemByCategory_returnEmptyList_whenListEmptyByCategory() {
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path(BASE_URL)
+                        .queryParam("category", "LUNCH")
+                        .queryParam("sort", "az")
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(MenuItemDto.class)
+                .hasSize(0);
+    }
+
+    @Test // Получение корректного отсортированного списка блюд из категори, в которой есть блюда
+    void getListMenuItemByCategory_returnSortList_whenCategory() {
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path(BASE_URL)
+                        .queryParam("category", "DRINKS")
+                        .queryParam("sort", "az")
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(MenuItemDto.class)
+                .hasSize(3)
+                .value(response -> {
+                    assertThat(response.stream().sorted(Comparator.comparing(MenuItemDto::getName))).isEqualTo(response);
+                    assertThat(response.size()).isEqualTo(3);
+                });
     }
 }

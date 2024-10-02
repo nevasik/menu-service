@@ -33,6 +33,16 @@ public class TestData {
                 .build();
     }
 
+    public static CreateMenuRequest getMenuRequest() {
+        return CreateMenuRequest.builder()
+                .name("Cappuccino")
+                .price(BigDecimal.valueOf(10))
+                .timeToCook(1000L)
+                .description("Nice Coffee")
+                .imageUrl("http://images.com/cappuccino.png")
+                .build();
+    }
+
     public static CreateMenuRequest createMenuRequest() {
         return CreateMenuRequest.builder()
                 .name(ITALIAN_SALAD_NAME)
