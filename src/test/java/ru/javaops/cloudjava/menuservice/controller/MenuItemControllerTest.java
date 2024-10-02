@@ -14,8 +14,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static ru.javaops.cloudjava.menuservice.testutils.TestConstants.BASE_URL;
-import static ru.javaops.cloudjava.menuservice.testutils.TestData.createMenuRequest;
-import static ru.javaops.cloudjava.menuservice.testutils.TestData.updateMenuFullRequest;
+import static ru.javaops.cloudjava.menuservice.testutils.TestData.*;
 
 @AutoConfigureMockMvc
 @SpringBootTest
@@ -103,4 +102,54 @@ public class MenuItemControllerTest extends BaseTest {
                 .exchange()
                 .expectStatus().isNotFound();
     }
+
+    /*
+
+    Получение корректного отсортированного списка блюд из категори, в которой есть блюда
+     */
+
+    @Test // Успешное получение блюда по идентификатору
+    void getMenuItemByID_returnsMenuItem() {
+        var req = getMenuRequest();
+        var id = getIdByName("Cappuccino");
+
+        webTestClient.get()
+                .uri(BASE_URL + "/" + id)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(MenuItemDto.class)
+                .value(response -> {
+                    assertThat(response.getId()).isNotNull();
+                    assertThat(response.getName()).isNotNull();
+                    assertThat(response.getDescription()).isNotNull();
+                    assertThat(response.getPrice()).isNotNull();
+                    assertThat(response.getImageUrl()).isNotNull();
+                    assertThat(response.getCreatedAt()).isNotNull();
+                });
+    }
+
+    @Test // Ошибка при получении несуществующего блюда
+    void getMenuItemByID_returnsBAD_REQUEST_whenItemNotInDb() {
+        var id = -11L;
+
+        webTestClient.get()
+                .uri(BASE_URL + "/" + id)
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test // Получение пустого списка блюд из категории, в которой нет блюд
+    void getListMenuItemByCategory_returnEmptyList_whenListEmptyByCategory() {
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path(BASE_URL)
+                        .queryParam("category", "LUNCH")
+                        .queryParam("sort", "az")
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(MenuItemDto.class)
+                .hasSize(0);
+    }
+
 }
