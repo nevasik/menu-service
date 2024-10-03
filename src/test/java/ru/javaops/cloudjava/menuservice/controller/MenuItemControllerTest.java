@@ -167,7 +167,7 @@ public class MenuItemControllerTest extends BaseTest {
                 .expectBody(MenuItemDto.class)
                 .value(response -> {
                     assertThat(response.getId()).isNotNull();
-                    assertThat(response.getName()).isNotNull();
+                    assertThat(response.getName()).isNotNull().isEqualTo("Cappuccino");
                     assertThat(response.getDescription()).isNotNull();
                     assertThat(response.getPrice()).isNotNull();
                     assertThat(response.getImageUrl()).isNotNull();
