@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.2.8'
+	id 'org.springframework.boot' version '3.2.7'
 	id 'io.spring.dependency-management' version '1.1.5'
 }
 
@@ -58,7 +58,15 @@ dependencies {
 
 tasks.bootBuildImage {
 	docker {
-		host = "//./pipe/dockerDesktopLinuxEngine"
+		host = "unix:///Users/mac/.docker/run/docker.sock"
+	}
+}
+
+bootBuildImage {
+	imageName = "${project.name}"
+	environment = ["BP_JVM_VERSION": "17.*"]
+	docker {
+		host = "unix:///Users/mac/.docker/run/docker.sock"
 	}
 }
 

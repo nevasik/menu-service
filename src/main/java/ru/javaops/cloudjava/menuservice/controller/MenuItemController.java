@@ -14,10 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.*;
-import ru.javaops.cloudjava.menuservice.dto.CreateMenuRequest;
-import ru.javaops.cloudjava.menuservice.dto.MenuItemDto;
-import ru.javaops.cloudjava.menuservice.dto.SortBy;
-import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
+import ru.javaops.cloudjava.menuservice.dto.*;
 import ru.javaops.cloudjava.menuservice.service.MenuService;
 import ru.javaops.cloudjava.menuservice.storage.model.Category;
 
@@ -140,5 +137,25 @@ public class MenuItemController {
                                       @RequestParam(value = "sort", defaultValue = "az") @NotBlank(message = "Параметр сортировки не должен быть пустым.") String sort) {
         log.info("Received request to GET list of MenuItems for category={}, sorted by={}", category, sort);
         return menuService.getMenusFor(Category.fromString(category), SortBy.fromString(sort));
+    }
+
+    @Operation(
+            summary = "${api.menu-info.summary}",
+            description = "${api.menu-info.description}"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "${api.response.getMenuInfoOk}"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "${api.response.getMenuInfoBadRequest}",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )
+            )
+    })
+    @PostMapping("/menu-info")
+    public OrderMenuResponse getMenusForOrder(@RequestBody @Valid OrderMenuRequest request) {
+        log.info("Received request to GET info for menu with names: {}", request.getMenuNames());
+        return menuService.getMenusForOrder(request);
     }
 }

@@ -6,15 +6,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import ru.javaops.cloudjava.menuservice.BaseIntegrationTest;
+import ru.javaops.cloudjava.menuservice.dto.MenuInfo;
 import ru.javaops.cloudjava.menuservice.dto.MenuItemDto;
-import ru.javaops.cloudjava.menuservice.testutils.TestData;
+import ru.javaops.cloudjava.menuservice.dto.OrderMenuRequest;
+import ru.javaops.cloudjava.menuservice.dto.OrderMenuResponse;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static ru.javaops.cloudjava.menuservice.testutils.TestConstants.BASE_URL;
-import static ru.javaops.cloudjava.menuservice.testutils.TestData.*;
+import static ru.javaops.cloudjava.menuservice.testutils.TestData.createMenuRequest;
+import static ru.javaops.cloudjava.menuservice.testutils.TestData.updateMenuFullRequest;
 
 public class MenuItemControllerTest extends BaseIntegrationTest {
 
@@ -151,65 +155,38 @@ public class MenuItemControllerTest extends BaseIntegrationTest {
                 .expectStatus().isNotFound();
     }
 
-    @Test // Успешное получение блюда по идентификатору
-    void getMenuItemByID_returnsMenuItem() {
-        var req = getMenuRequest();
-        var id = getIdByName("Cappuccino");
+    @Test
+    void getMenusForOrder_returnsCorrectMenuInfo() {
+        var request = OrderMenuRequest.builder()
+                .menuNames(Set.of("Cappuccino", "Green Salad", "Wine", "Tea", "Unknown"))
+                .build();
 
-        webTestClient.get()
-                .uri(BASE_URL + "/" + id)
+        webTestClient.post()
+                .uri(BASE_URL + "/menu-info")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(MenuItemDto.class)
+                .expectBody(OrderMenuResponse.class)
                 .value(response -> {
-                    assertThat(response.getId()).isNotNull();
-                    assertThat(response.getName()).isNotNull().isEqualTo("Cappuccino");
-                    assertThat(response.getDescription()).isNotNull();
-                    assertThat(response.getPrice()).isNotNull();
-                    assertThat(response.getImageUrl()).isNotNull();
-                    assertThat(response.getCreatedAt()).isNotNull();
-                });
-    }
-
-    @Test // Ошибка при получении несуществующего блюда
-    void getMenuItemByID_returnsBAD_REQUEST_whenItemNotInDb() {
-        var id = -11L;
-
-        webTestClient.get()
-                .uri(BASE_URL + "/" + id)
-                .exchange()
-                .expectStatus().isBadRequest();
-    }
-
-    @Test // Получение пустого списка блюд из категории, в которой нет блюд
-    void getListMenuItemByCategory_returnEmptyList_whenListEmptyByCategory() {
-        webTestClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path(BASE_URL)
-                        .queryParam("category", "LUNCH")
-                        .queryParam("sort", "az")
-                        .build())
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(MenuItemDto.class)
-                .hasSize(0);
-    }
-
-    @Test // Получение корректного отсортированного списка блюд из категори, в которой есть блюда
-    void getListMenuItemByCategory_returnSortList_whenCategory() {
-        webTestClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path(BASE_URL)
-                        .queryParam("category", "DRINKS")
-                        .queryParam("sort", "az")
-                        .build())
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(MenuItemDto.class)
-                .hasSize(3)
-                .value(response -> {
-                    assertThat(response.stream().sorted(Comparator.comparing(MenuItemDto::getName))).isEqualTo(response);
-                    assertThat(response.size()).isEqualTo(3);
+                    var infos = response.getMenuInfos();
+                    infos.sort(Comparator.comparing(MenuInfo::getName));
+                    assertThat(infos).hasSize(request.getMenuNames().size());
+                    assertThat(infos.get(0).getName()).isEqualTo("Cappuccino");
+                    assertThat(infos.get(0).getPrice()).isNotNull();
+                    assertThat(infos.get(0).getIsAvailable()).isTrue();
+                    assertThat(infos.get(1).getName()).isEqualTo("Green Salad");
+                    assertThat(infos.get(1).getPrice()).isNotNull();
+                    assertThat(infos.get(1).getIsAvailable()).isTrue();
+                    assertThat(infos.get(2).getName()).isEqualTo("Tea");
+                    assertThat(infos.get(2).getPrice()).isNotNull();
+                    assertThat(infos.get(2).getIsAvailable()).isTrue();
+                    assertThat(infos.get(3).getName()).isEqualTo("Unknown");
+                    assertThat(infos.get(3).getPrice()).isNull();
+                    assertThat(infos.get(3).getIsAvailable()).isFalse();
+                    assertThat(infos.get(4).getName()).isEqualTo("Wine");
+                    assertThat(infos.get(4).getPrice()).isNotNull();
+                    assertThat(infos.get(4).getIsAvailable()).isTrue();
                 });
     }
 }
