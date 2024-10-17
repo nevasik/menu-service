@@ -56,12 +56,6 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
-tasks.bootBuildImage {
-	docker {
-		host = "unix:///Users/mac/.docker/run/docker.sock"
-	}
-}
-
 bootBuildImage {
 	imageName = "${project.name}"
 	environment = ["BP_JVM_VERSION": "17.*"]
