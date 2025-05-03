@@ -1,5 +1,5 @@
-name: Commit Checks # название нашего workflow
-on: # Запускаем workflow при push и pull-request в ветку master.
+name: Commit Checks # название workflow
+on: # запуск workflow при push и pull-request в ветку master.
   push:
     branches:
       - master

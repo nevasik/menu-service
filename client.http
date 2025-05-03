@@ -1,0 +1,51 @@
+### Создать блюдо. Доступно для сотрудников, информация о сотруднике передается в токене доступа
+POST http://localhost:9091/v1/menu-items
+Content-Type: application/json
+
+{
+  "name": "Хинкали",
+  "description": "Сочные хинкали со свининой/говядиной",
+  "price": 10.00,
+  "category": "LUNCH",
+  "timeToCook": 20,
+  "weight": 150.55,
+  "imageUrl": "https://www.google.com/url?sa=i&url=https%3A%2F%2Fxn--80aehljthdlflme1c.xn--p1ai%2Frecipe%2Fall%2Fhinkali-s-kuritsey%2F&psig=AOvVaw3e38Xsoh1K7Zo2xgfMZ3xf&ust=1746369269884000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCMDh4dHCh40DFQAAAAAdAAAAABAE",
+  "ingredientCollection": {
+    "ingredients": [
+      {
+        "name": "свинина",
+        "quantity": "20 г"
+      },
+      {
+        "name": "говядина",
+        "quantity": "20 г"
+      },
+      {
+        "name": "тесто",
+        "quantity": "30 г"
+      }
+    ]
+  }
+}
+
+### Получить блюдо. Доступно всем пользователям
+GET http://localhost:9091/v1/menu-items/4
+
+### Обновить блюдо, параметры обновления передаются в теле запроса. Доступно для сотрудников, информация о сотруднике передается в токене доступа
+PATCH http://localhost:9091/v1/menu-items/3
+Content-Type: application/json
+
+{
+  "name": "Сочные хинкали",
+  "description": "Хинкали со свининой/говядиной",
+  "price": 15.00,
+  "timeToCook": 25,
+  "imageUrl": "https://clck.ru/3Lq8sE"
+}
+
+### Удалить блюдо. Доступно для сотрудников, информация о сотруднике передается в токене доступа
+DELETE http://localhost:9091/v1/menu-items/3
+
+### Получить список блюд из выбранной категории, отсортированный или по алфавиту (AZ, ZA), или по цене (PRICE_ASC, PRICE_DESC), или по дате создания (DATE_ASC, DATE_DESC). Доступно всем пользователям
+GET http://localhost:9091/v1/menu-items?category=SALADS&sort=DATE_DESC
+
