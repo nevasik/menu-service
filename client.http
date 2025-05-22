@@ -29,7 +29,7 @@ Content-Type: application/json
 }
 
 ### Получить блюдо. Доступно всем пользователям
-GET http://localhost:9091/v1/menu-items/4
+GET http://localhost:9091/v1/menu-items/3
 
 ### Обновить блюдо, параметры обновления передаются в теле запроса. Доступно для сотрудников, информация о сотруднике передается в токене доступа
 PATCH http://localhost:9091/v1/menu-items/3
@@ -47,5 +47,5 @@ Content-Type: application/json
 DELETE http://localhost:9091/v1/menu-items/3
 
 ### Получить список блюд из выбранной категории, отсортированный или по алфавиту (AZ, ZA), или по цене (PRICE_ASC, PRICE_DESC), или по дате создания (DATE_ASC, DATE_DESC). Доступно всем пользователям
-GET http://localhost:9091/v1/menu-items?category=SALADS&sort=DATE_DESC
+GET http://localhost:9091/v1/menu-items?category=LUNCH&sort=DATE_DESC
 

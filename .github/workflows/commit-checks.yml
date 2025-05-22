@@ -53,15 +53,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Build Docker image
-        working-directory: ./docker
-        run: docker build -t menu-service ../
-
-      - name: Start containers
-        run: docker-compose -f docker/docker-compose.yml up -d
-
-      - name: Verify deployment
+      - name: Build and start containers
         run: |
-          docker ps -a
-          docker logs menu-service
+          docker-compose -f docker/docker-compose.yml build 
+          docker-compose -f docker/docker-compose.yml up -d
           
