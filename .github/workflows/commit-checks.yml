@@ -40,7 +40,8 @@ jobs:
 
       # Останавливаем контейнеры, указывая путь к файлу
       - name: Stop and remove containers
-        run: docker-compose -f docker/docker-compose.yml down
+        run: |
+          docker-compose -f docker/docker-compose.yml down --rmi all --volumes --remove-orphans || true
 
       # Очищаем Docker
       - name: Remove unused data
