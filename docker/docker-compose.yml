@@ -8,7 +8,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "59483:59483"
+      - "9091:9091"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/menu_service_db
 
