@@ -38,14 +38,14 @@ jobs:
       - name: Validate docker-compose file
         run: ls -la docker/docker-compose.yml
 
-      # Останавливаем контейнеры, указывая путь к файлу
-      - name: Stop and remove containers
+      # Останавливаем контейнеры без удаления томов
+      - name: Stop containers
         run: |
-          docker-compose -f docker/docker-compose.yml down --rmi all --volumes --remove-orphans || true
+          docker-compose -f docker/docker-compose.yml down --remove-orphans || true
 
-      # Очищаем Docker
-      - name: Remove unused data
-        run: docker system prune -a -f
+      # Очищаем только неиспользуемые образы (не трогаем тома)
+      - name: Cleanup images
+        run: docker system prune -f --filter "until=24h"
 
   deploy:
     runs-on: self-hosted

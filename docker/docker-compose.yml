@@ -32,4 +32,5 @@ services:
 
 volumes:
   db:
+    name: menu-service-postgres-data
     driver: local
