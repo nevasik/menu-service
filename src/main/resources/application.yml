@@ -54,6 +54,70 @@ spring:
         format_sql: true
         # говорим hibernate показывать sql запросы в логах (для отладки и тестирования)
         show_sql: true
+  # https://stackoverflow.com/a/69739888/548473
+  config:
+    import: ${configserver.import}
+  cloud:
+    config:
+      import-check.enabled: false
+      fail-fast: false
+
+      request-connect-timeout: 5000
+      request-read-timeout: 5000
+      retry:
+        max-attempts: 6
+        initial-interval: 1000
+        max-interval: 2000
+        multiplier: 1.1
+      label: security_client
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${external.keycloak-url}
+          jwk-set-uri: ${external.jwk-set-url}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${external.discovery-service-url}
+    initial-instance-info-replication-interval-seconds: 5
+  instance:
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 5
+    prefer-ip-address: true
+
+configserver:
+  import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:9095}
+
+external:
+  discovery-service-url: ${DISCOVERY_SERVICE_URL:http://localhost:8761/eureka/}
+  zipkin-endpoint: http://localhost:9411/api/v2/spans
+  loki-url: http://localhost:3100/loki/api/v1/push
+  keycloak-url: ${KEYCLOAK_URL:http://keycloak:8080/realms/cloud-java}
+  jwk-set-url: ${JWK_SET_URL:http://keycloak:8080/realms/cloud-java/protocol/openid-connect/certs}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+    propagation:
+      type: b3
+  zipkin:
+    tracing:
+      endpoint: ${external.zipkin-endpoint}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        all: true
 
 springdoc:
   api-docs:

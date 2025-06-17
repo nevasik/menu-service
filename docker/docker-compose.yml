@@ -1,5 +1,20 @@
 version: "3.9"
 services:
+  config-server:
+    image: "config-server"
+    container_name: "config-server"
+    environment:
+      - THC_PATH=/actuator/health
+      - THC_PORT=9095
+    ports:
+      - "9095:9095"
+    healthcheck:
+      test: [ "CMD", "/cnb/process/health-check" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   menu-service:
     image: "nevasik/menu-service:nevasik"
     container_name: "menu-service"
@@ -7,19 +22,42 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      config-server:
+        condition: service_healthy
     ports:
       - "9091:9091"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/menu_service_db
+      - CONFIGSERVER_IMPORT=configserver:${CONFIG_SERVER_URL}
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=true
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=${MENU_DB_URL}
+      - DB_USER=${MENU_DB_USER}
+      - DB_PASSWORD=${MENU_DB_PASSWORD}
+      - DISCOVERY_SERVICE_URL=${DISCOVERY_SERVICE_URL}
+
+  discovery-service:
+    image: "discovery-service"
+    container_name: "discovery-service"
+    ports:
+      - "8761:8761"
+    depends_on:
+      config-server:
+        condition: service_healthy
+    environment:
+      - CONFIGSERVER_IMPORT=configserver:${CONFIG_SERVER_URL}
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=true
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_HOSTNAME=discovery-service
 
   postgres:
     image: "postgres:16.1"
     container_name: "postgres"
     ports:
-      - "15432:5432"
+      - "5431:5431"
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=${MENU_DB_USER}
+      - POSTGRES_PASSWORD=${MENU_DB_PASSWORD}
+      - PGPORT=5431
     volumes:
       - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
       - db:/var/lib/postgresql/data
